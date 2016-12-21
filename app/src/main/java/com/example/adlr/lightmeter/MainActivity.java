@@ -1,5 +1,6 @@
 package com.example.adlr.lightmeter;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -13,9 +14,12 @@ import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
 
+    TeensyConnection teensyConnection;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        teensyConnection = new TeensyConnection(this);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -24,8 +28,9 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replaced with my own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                teensyConnection.connect();
+//                Snackbar.make(view, "Replaced with my own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
             }
         });
 
