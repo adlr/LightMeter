@@ -17,6 +17,7 @@ public class GraphView extends View {
     public GraphView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
+    private float[] mVals;
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
@@ -40,9 +41,12 @@ public class GraphView extends View {
         trans.postTranslate(0.0f, getHeight());
 
         Path path = new Path();
-        path.moveTo(0.0f, dummyData[0]);
-        for (int i = 1; i < dummyData.length; i++) {
-            path.lineTo((float)i, dummyData[i]);
+        float useVals[] = mVals;
+        if (useVals == null)
+            useVals = dummyData;
+        path.moveTo(0.0f, useVals[0]);
+        for (int i = 1; i < useVals.length; i++) {
+            path.lineTo((float)i, useVals[i]);
         }
         path.transform(trans);
         canvas.drawPath(path, pt);
@@ -50,5 +54,10 @@ public class GraphView extends View {
         //canvas.drawLine(0, 0, getWidth(), getHeight(), new Paint());
 
         //canvas.drawOval(0, 0, getWidth(), getHeight(), new Paint());
+    }
+
+    public void setVals(float[] vals) {
+        mVals = vals;
+        invalidate();
     }
 }

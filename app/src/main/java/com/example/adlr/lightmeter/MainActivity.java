@@ -2,6 +2,7 @@ package com.example.adlr.lightmeter;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
@@ -28,7 +29,23 @@ public class MainActivity extends AppCompatActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                teensyConnection.connect();
+                if (!teensyConnection.connected()) {
+                    teensyConnection.connect();
+                } else {
+                    final Handler handler = new Handler();
+                    Runnable runnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            float[] vals = teensyConnection.readMany();
+                            if (vals == null)
+                                return;
+                            GraphView graphView = (GraphView) findViewById(R.id.view);
+                            graphView.setVals(vals);
+                            handler.postDelayed(this, 500);
+                        }
+                    };
+                    handler.postDelayed(runnable, 500);
+                }
 //                Snackbar.make(view, "Replaced with my own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();
             }

@@ -40,6 +40,7 @@ public class TeensyConnection {
     BroadcastReceiver respondToUsbPermission = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.v(TAG, "starting onReceive");
             if (mUsbDevice == null) {
                 Log.v(TAG, "usb device was not properly opened");
                 return;
@@ -48,11 +49,13 @@ public class TeensyConnection {
                 Log.v(TAG, "didn't get permission to open device");
                 return;
             }
+            mUsbConnection = mUsbManager.openDevice(mUsbDevice);
             // Hard-coded indices to the serial port of the device
             int ifIdx = 1;
             int epInIdx = 1;
             int epOutIdx = 0;
             UsbInterface iface = mUsbDevice.getInterface(ifIdx);
+            Log.v(TAG, "iface is" + (iface == null ? "" : " not") + " null");
             if (!mUsbConnection.claimInterface(iface, true)) {
                 Log.v(TAG, "couldn't claim interface");
                 return;
@@ -60,11 +63,71 @@ public class TeensyConnection {
             mEndpointIn = iface.getEndpoint(epInIdx);
             mEndpointOut = iface.getEndpoint(epOutIdx);
             Log.v(TAG, "have endpoints!");
+            pingTest('a');
+            pingTest('r');
         }
     };
 
+    public float[] readMany() {
+        byte out[] = {(byte)'!'};
+        int outrc = mUsbConnection.bulkTransfer(mEndpointOut, out, out.length, 1000);
+        Log.v(TAG, "readmany write returned " + outrc);
+        if (outrc < 0)
+            return null;
+        byte in[] = new byte[3000];
+        int offset = 0;
+        float ret[] = new float[400];
+        for (int i = 0; i < 400; i++) {
+            int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, offset, in.length - offset, 3000);
+            Log.v(TAG, "readmany read returned " + inrc);
+            if (inrc <= 0)
+                break;
+            if (inrc > 0) {
+                offset += inrc;
+            }
+        }
+        Log.v(TAG, "offset is now " + offset);
+        // parse
+        for (int i = 0; i < 400; i++) {
+                String strval = "0.0";
+                try {
+                    strval = new String(in, i * 6, 4, "UTF-8");
+                    Log.v(TAG, "first byte " + in[i * 6]);
+                    Log.v(TAG, "strval:" + strval);
+                } catch (Exception e) {
+                    Log.v(TAG, "Got exception");
+                }
+                ret[i] = Float.parseFloat(strval);
+        }
+        return ret;
+    }
+
+    private void pingTest(char ch) {
+        byte out[] = {(byte)ch, 0};
+        int outrc = mUsbConnection.bulkTransfer(mEndpointOut, out, 2, 1000);
+        Log.v(TAG, "ping write returned " + outrc);
+        if (outrc < 0)
+            return;
+        byte in[] = new byte[80];
+        int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, in.length, 1000);
+        Log.v(TAG, "ping read returned " + inrc);
+        if (inrc < 0)
+            return;
+        if (inrc > 0) {
+            try {
+                Log.v(TAG, "string: " + new String(in, 0, inrc, "UTF-8"));
+            } catch (Exception e) {}
+        }
+    }
+
+    public boolean connected() {
+        return mEndpointIn != null && mEndpointOut != null;
+    }
+
     public void connect() {
         Log.v(TAG, "connect called");
+        if (connected())
+            return;
         UsbDevice dev = findUsbDevice();
         if (dev == null) {
             Log.v(TAG, "device not found");
