@@ -12,6 +12,8 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.HashMap;
 
 /**
@@ -70,35 +72,38 @@ public class TeensyConnection {
 
     public float[] readMany() {
         byte out[] = {(byte)'!'};
+        long startTime = System.nanoTime();
         int outrc = mUsbConnection.bulkTransfer(mEndpointOut, out, out.length, 1000);
+        Log.v(TAG, "readMany write took " + (System.nanoTime() - startTime) + "ns");
         Log.v(TAG, "readmany write returned " + outrc);
         if (outrc < 0)
             return null;
-        byte in[] = new byte[3000];
+        startTime = System.nanoTime();
+        byte in[] = new byte[400 * 2];
         int offset = 0;
         float ret[] = new float[400];
-        for (int i = 0; i < 400; i++) {
-            int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, offset, in.length - offset, 3000);
-            Log.v(TAG, "readmany read returned " + inrc);
-            if (inrc <= 0)
-                break;
-            if (inrc > 0) {
-                offset += inrc;
-            }
+        int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, offset, in.length - offset, 3000);
+        Log.v(TAG, "readmany read returned " + inrc);
+        if (inrc > 0) {
+            offset += inrc;
         }
-        Log.v(TAG, "offset is now " + offset);
+        short[] readings = new short[in.length / 2];
+        ByteBuffer.wrap(in).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(readings);
+        //Log.v(TAG, "offset is now " + offset);
         // parse
         for (int i = 0; i < 400; i++) {
-                String strval = "0.0";
-                try {
-                    strval = new String(in, i * 6, 4, "UTF-8");
-                    Log.v(TAG, "first byte " + in[i * 6]);
-                    Log.v(TAG, "strval:" + strval);
-                } catch (Exception e) {
-                    Log.v(TAG, "Got exception");
-                }
-                ret[i] = Float.parseFloat(strval);
+            ret[i] = readings[i] * 3.3f / 4096.0f;
+//                String strval = "0.0";
+//                try {
+//                    strval = new String(in, i * 6, 4, "UTF-8");
+////                    Log.v(TAG, "first byte " + in[i * 6]);
+////                    Log.v(TAG, "strval:" + strval);
+//                } catch (Exception e) {
+//                    Log.v(TAG, "Got exception");
+//                }
+//                ret[i] = Float.parseFloat(strval);
         }
+        Log.v(TAG, "read many read took " + (System.nanoTime() - startTime) + "ns");
         return ret;
     }
 

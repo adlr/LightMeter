@@ -7,6 +7,7 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -14,6 +15,7 @@ import android.view.View;
  */
 
 public class GraphView extends View {
+    private static final String TAG = "GraphView";
     public GraphView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
@@ -21,6 +23,7 @@ public class GraphView extends View {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        long startTime = System.nanoTime();
         float[] dummyData = new float[100 * 4];
         for (int i = 0; i < dummyData.length; i++) {
             dummyData[i] = Math.abs((float)Math.sin(4.0f * ((float)Math.PI) * (float)i / 400f)) * 1.3f;
@@ -50,6 +53,7 @@ public class GraphView extends View {
         }
         path.transform(trans);
         canvas.drawPath(path, pt);
+        Log.v(TAG, "Draw Time: " + (System.nanoTime() - startTime) + "ns");
 
         //canvas.drawLine(0, 0, getWidth(), getHeight(), new Paint());
 

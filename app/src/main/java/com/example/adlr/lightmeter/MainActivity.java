@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
                                 return;
                             GraphView graphView = (GraphView) findViewById(R.id.view);
                             graphView.setVals(vals);
-                            handler.postDelayed(this, 500);
+                            //handler.postDelayed(this, 500);
                         }
                     };
                     handler.postDelayed(runnable, 500);
