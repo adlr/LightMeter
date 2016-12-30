@@ -23,16 +23,17 @@ public class GraphView extends View {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        long startTime = System.nanoTime();
-        float[] dummyData = new float[100 * 4];
-        for (int i = 0; i < dummyData.length; i++) {
-            dummyData[i] = Math.abs((float)Math.sin(4.0f * ((float)Math.PI) * (float)i / 400f)) * 1.3f;
-        }
-
         float xmin = 0.0f;
-        float xmax = 399.0f;
+        float xmax = 2399.0f;
         float ymin = 0f;
         float ymax = 2.0f;
+
+        long startTime = System.nanoTime();
+        float[] dummyData = new float[(int)xmax + 1];
+        for (int i = 0; i < dummyData.length; i++) {
+            dummyData[i] = Math.abs((float)Math.sin(4.0f * ((float)Math.PI) * (float)i / (xmax + 1))) * 1.3f;
+        }
+
 
         Paint pt = new Paint(Paint.ANTI_ALIAS_FLAG);
         pt.setColor(Color.BLACK);
