@@ -37,14 +37,14 @@ public class MainActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             float[] vals = teensyConnection.readMany();
-                            if (vals == null)
-                                return;
-                            GraphView graphView = (GraphView) findViewById(R.id.view);
-                            graphView.setVals(vals);
-                            //handler.postDelayed(this, 500);
+                            if (vals != null) {
+                                GraphView graphView = (GraphView) findViewById(R.id.view);
+                                graphView.setVals(vals);
+                            }
+                            handler.postDelayed(this, 50);
                         }
                     };
-                    handler.postDelayed(runnable, 500);
+                    handler.postDelayed(runnable, 50);
                 }
 //                Snackbar.make(view, "Replaced with my own action", Snackbar.LENGTH_LONG)
 //                        .setAction("Action", null).show();

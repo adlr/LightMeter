@@ -78,21 +78,29 @@ public class TeensyConnection {
         Log.v(TAG, "readmany write returned " + outrc);
         if (outrc < 0)
             return null;
-        startTime = System.nanoTime();
-        byte in[] = new byte[400 * 2];
         int offset = 0;
-        float ret[] = new float[400];
-        int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, offset, in.length - offset, 3000);
+        float ret[] = new float[2400];
+        byte in[] = new byte[ret.length * 2];
+        startTime = System.nanoTime();
+        int inrc = mUsbConnection.bulkTransfer(mEndpointIn, in, offset, in.length - offset, 20000);
+        Log.v(TAG, "read many read took " + (System.nanoTime() - startTime) + "ns");
         Log.v(TAG, "readmany read returned " + inrc);
         if (inrc > 0) {
             offset += inrc;
+        }
+        if (inrc < in.length) {
+            Log.v(TAG, "got short return value: " + inrc);
+            return null;
         }
         short[] readings = new short[in.length / 2];
         ByteBuffer.wrap(in).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(readings);
         //Log.v(TAG, "offset is now " + offset);
         // parse
-        for (int i = 0; i < 400; i++) {
-            ret[i] = readings[i] * 3.3f / 4096.0f;
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = ((int)readings[i] & 0xffff) * 3.3f / 65535f;
+            if (i < 4) {
+                Log.v(TAG, "sample value: " + ret[i]);
+            }
 //                String strval = "0.0";
 //                try {
 //                    strval = new String(in, i * 6, 4, "UTF-8");
@@ -103,7 +111,6 @@ public class TeensyConnection {
 //                }
 //                ret[i] = Float.parseFloat(strval);
         }
-        Log.v(TAG, "read many read took " + (System.nanoTime() - startTime) + "ns");
         return ret;
     }
 

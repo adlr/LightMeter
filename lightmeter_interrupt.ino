@@ -23,10 +23,14 @@ elapsedMicros* adc_micros;
 // Get results for 3 60Hz periods
 unsigned short results[kSamplesPerSec * 3 / 60];
 
+elapsedMicros start_timer;
+volatile long duration = 0;
+
 bool started = false;
 
 void setup() {
   Serial.begin(9600);  // baud rate ignored
+  //delay(1000);
   // put your setup code here, to run once:
   //delay(1000);
   //Serial.println("setup");
@@ -34,7 +38,7 @@ void setup() {
   adc.setAveraging(2);
   adc.setResolution(16);
   adc.setConversionSpeed(ADC_MED_SPEED);
-  adc.setSamplingSpeed(ADC_MED_SPEED);
+  adc.setSamplingSpeed(ADC_HIGH_SPEED_16BITS);
   //adc.enableCompare(1.0/3.3*adc.getMaxValue(ADC_0), 0, ADC_0);
   //adc.enableCompareRange(1.0*adc.getMaxValue(ADC_0)/3.3,
   //                       2.0*adc.getMaxValue(ADC_0)/3.3, 0, 1, ADC_0);
@@ -50,16 +54,23 @@ void loop() {
       Serial.println(ret);
     } else if (cval == '!' && !started) {
       started = true;
+      start_timer = elapsedMicros();
       timer.begin(TimerCallback, kPeriod);
+    } else if (cval == '#') {
+      Serial.write(reinterpret_cast<uint8_t*>(results), ARRAYSIZE(results) * 2);
     }
   }
   if (started && (samples == ARRAYSIZE(results) || bail)) {
+    //Serial.println(duration);
     started = false;
     timer.end();
     if (bail) {
       memset(results, 0, sizeof(results));
     }
     Serial.write(reinterpret_cast<uint8_t*>(results), ARRAYSIZE(results) * 2);
+//    for (int i = 0; i < 4; i++) {
+//      Serial.println(results[i] * 3.3f / 65535.0f);
+//    }
     samples = 0;
   }
   
@@ -91,6 +102,9 @@ void TimerCallback() {
 
 // must be named exactly adc0_isr
 void adc0_isr() {
+  if (samples == ARRAYSIZE(results) / 2) {
+    duration = start_timer;
+  }
   if (samples < ARRAYSIZE(results)) {
     //results[samples] = (short)*adc_micros;
     //delete adc_micros;
